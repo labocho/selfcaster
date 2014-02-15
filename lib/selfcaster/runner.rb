@@ -4,6 +4,7 @@ require "time"
 require "json"
 require "nokogiri"
 require "open-uri"
+require "optparse"
 require "dotenv"
 Dotenv.load
 
@@ -41,8 +42,30 @@ module Selfcaster
       new.run(argv)
     end
 
+    def options
+      @options ||= {
+        delete: false,
+        update_metadata: false
+      }
+    end
+
     def run(argv)
-      files = argv.map{|file_or_directory|
+      optparse = OptionParser.new do |o|
+        o.on("-d", "--[no-]delete"){|b| @options[:delete] = b }
+        o.on("-m", "--[no-]update-metadata"){|b| @options[:update_metadata] = b }
+        o.banner = "Usage: #{File.basename($PROGRAM_NAME)} [options] file_or_directory[...]"
+      end
+      optparse.parse!(argv)
+
+      if argv.empty? && !options[:update_metadata]
+        STDERR.print(optparse.help)
+        exit 1
+      end
+      scan(argv)
+    end
+
+    def scan(paths)
+      files = paths.map{|file_or_directory|
         if File.directory?(file_or_directory)
           Dir.glob(File.join(file_or_directory, "**/*")).to_a
         else
@@ -50,37 +73,39 @@ module Selfcaster
         end
       }.flatten
 
-      files.each do |file|
-        puts "Uploading... #{file}"
+      files.each{|file| upload(file) }
+      update_metadata if options[:update_metadata]
+    end
 
-        pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-FM\.MP3/
-        year, month, day, hour, min, channel = pattern.match(File.basename(file)).captures
-        time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
+    def upload(file)
+      pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-FM\.mp3/
+      return unless pattern =~ File.basename(file)
+      puts "Uploading... #{file}"
 
-        channel = "NHK-FM"
+      year, month, day, hour, min, channel = $~.captures
+      time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
 
-        attributes = {
-          content_filename: File.basename(file),
-          title: build_name(channel, time),
-          published_at: time.iso8601
-        }
+      channel = "NHK-FM"
 
-        puts "Title: #{attributes[:title]}"
-        puts "Published at: #{attributes[:published_at]}"
+      attributes = {
+        content_filename: File.basename(file),
+        title: build_name(channel, time),
+        published_at: time.iso8601
+      }
 
-        response = RestClient.post(build_url(channel), item: attributes, auth_token: AUTH_TOKEN)
-        puts "Metadata created on #{response.headers[:location]}"
+      puts "Title: #{attributes[:title]}"
+      puts "Published at: #{attributes[:published_at]}"
 
-        presigned_post = JSON.parse(response)["presigned_post"]
-        response = RestClient.post(presigned_post["url"], presigned_post["fields"].merge(file: File.new(file)))
+      response = RestClient.post(build_url(channel), item: attributes, auth_token: AUTH_TOKEN)
+      puts "Metadata created on #{response.headers[:location]}"
 
-        puts "Uploaded on #{response.headers[:location]}"
-        puts ""
+      presigned_post = JSON.parse(response)["presigned_post"]
+      response = RestClient.post(presigned_post["url"], presigned_post["fields"].merge(file: File.new(file)))
 
-        File.delete file
-      end
+      puts "Uploaded on #{response.headers[:location]}"
+      puts ""
 
-      update_metadata
+      File.delete(file) if options[:delete]
     end
 
     def build_url(channel)
