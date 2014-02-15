@@ -2,7 +2,6 @@
 require "rest_client"
 require "time"
 require "json"
-require "unf_ext"
 require "nokogiri"
 require "open-uri"
 require "dotenv"
@@ -54,12 +53,11 @@ module Selfcaster
       files.each do |file|
         puts "Uploading... #{file}"
 
-        pattern = /(\d\d)(\d\d)(\d\d)_(\d\d)(\d\d)_(.+)\.MP3/
+        pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-FM\.MP3/
         year, month, day, hour, min, channel = pattern.match(File.basename(file)).captures
-        time = Time.new(2000 + year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
+        time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
 
-        # Mac のファイル名は濁音などが別の文字になっているので正規化
-        channel = UNF::Normalizer.new.normalize(channel, :nfc)
+        channel = "NHK-FM"
 
         attributes = {
           content_filename: File.basename(file),
@@ -79,7 +77,7 @@ module Selfcaster
         puts "Uploaded on #{response.headers[:location]}"
         puts ""
 
-        File.rename file, "#{File.dirname(file)}/Uploaded/#{File.basename(file)}"
+        File.delete file
       end
 
       update_metadata
@@ -136,12 +134,6 @@ module Selfcaster
         description = section.css(".summary_text p").inner_html.gsub(/<br>/, "\n")
         {date: date, description: description}
       end
-    end
-
-    require "date"
-    def nth_week(date, start_day: 0)
-      offset = (date.wday - start_day - (date.day - 1)) % 7
-      (date.day - 1 + offset) / 7 + 1
     end
   end
 end
