@@ -6,6 +6,7 @@ require "nokogiri"
 require "open-uri"
 require "optparse"
 require "dotenv"
+require "listen"
 Dotenv.load
 
 module Selfcaster
@@ -45,14 +46,16 @@ module Selfcaster
     def options
       @options ||= {
         delete: false,
-        update_metadata: false
+        update_metadata: false,
+        watch: false
       }
     end
 
     def run(argv)
       optparse = OptionParser.new do |o|
-        o.on("-d", "--[no-]delete"){|b| @options[:delete] = b }
-        o.on("-m", "--[no-]update-metadata"){|b| @options[:update_metadata] = b }
+        o.on("-d", "--[no-]delete"){|b| options[:delete] = b }
+        o.on("-m", "--[no-]update-metadata"){|b| options[:update_metadata] = b }
+        o.on("-w", "--watch"){|b| options[:watch] = b }
         o.banner = "Usage: #{File.basename($PROGRAM_NAME)} [options] file_or_directory[...]"
       end
       optparse.parse!(argv)
@@ -61,7 +64,28 @@ module Selfcaster
         STDERR.print(optparse.help)
         exit 1
       end
-      scan(argv)
+
+      if options[:watch]
+        watch(argv)
+      else
+        scan(argv)
+        update_metadata if options[:update_metadata]
+      end
+    end
+
+    def watch(paths)
+      listener = Listen.to(*paths) do
+        scan(paths)
+        update_metadata if options[:update_metadata]
+      end
+      listener.start
+      trap(:INT){
+        STDERR.puts "Exiting"
+        listener.stop
+        exit 1
+      }
+      STDERR.puts "Listen #{paths.join(", ")}"
+      sleep
     end
 
     def scan(paths)
@@ -74,7 +98,6 @@ module Selfcaster
       }.flatten
 
       files.each{|file| upload(file) }
-      update_metadata if options[:update_metadata]
     end
 
     def upload(file)
