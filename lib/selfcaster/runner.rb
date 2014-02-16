@@ -1,12 +1,14 @@
 # encoding: UTF-8
 require "rest_client"
-require "time"
-require "json"
 require "nokogiri"
-require "open-uri"
-require "optparse"
 require "dotenv"
 require "listen"
+
+require "time"
+require "json"
+require "open-uri"
+require "optparse"
+
 Dotenv.load
 
 module Selfcaster
