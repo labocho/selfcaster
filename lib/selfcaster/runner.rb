@@ -150,14 +150,14 @@ module Selfcaster
     end
 
     def update_metadata
-      update_metadata_for_program("NHK-FM", "クラシックカフェ", get_metadata_from_nhk("http://www4.nhk.or.jp/c-cafe/5/"))
-      update_metadata_for_program("NHK-FM", "ベストオブクラシック", get_metadata_from_nhk("http://www4.nhk.or.jp/bescla/5/"))
-      update_metadata_for_program("NHK-FM", "古楽の楽しみ", get_metadata_from_nhk("http://www4.nhk.or.jp/kogaku/5/"))
-      update_metadata_for_program("NHK-FM", "名演奏ライブラリー", get_metadata_from_nhk("http://www4.nhk.or.jp/meiensou/5/"))
+      update_metadata_for_program("NHK-FM", "クラシックカフェ", get_metadata_from_nhk("http://www4.nhk.or.jp/c-cafe/5/", "http://www4.nhk.or.jp/c-cafe/"))
+      update_metadata_for_program("NHK-FM", "ベストオブクラシック", get_metadata_from_nhk("http://www4.nhk.or.jp/bescla/5/", "http://www4.nhk.or.jp/bescla/"))
+      update_metadata_for_program("NHK-FM", "古楽の楽しみ", get_metadata_from_nhk("http://www4.nhk.or.jp/kogaku/5/", "http://www4.nhk.or.jp/kogaku/"))
+      update_metadata_for_program("NHK-FM", "名演奏ライブラリー", get_metadata_from_nhk("http://www4.nhk.or.jp/meiensou/5/", "http://www4.nhk.or.jp/meiensou/"))
       update_metadata_for_program("NHK-FM", "きらクラ!", get_metadata_from_nhk("http://www4.nhk.or.jp/kira/5/"))
-      update_metadata_for_program("NHK-FM", "ブラボー! オーケストラ", get_metadata_from_nhk("http://www4.nhk.or.jp/bravo/5/"))
-      update_metadata_for_program("NHK-FM", "DJ クラシック", get_metadata_from_nhk("http://www4.nhk.or.jp/dj-classic/5/"))
-      update_metadata_for_program("NHK-FM", "リサイタル・ノヴァ", get_metadata_from_nhk("http://www4.nhk.or.jp/nova/5/"))
+      update_metadata_for_program("NHK-FM", "ブラボー! オーケストラ", get_metadata_from_nhk("http://www4.nhk.or.jp/bravo/5/", "http://www4.nhk.or.jp/bravo/"))
+      update_metadata_for_program("NHK-FM", "DJ クラシック", get_metadata_from_nhk("http://www4.nhk.or.jp/dj-classic/5/", "http://www4.nhk.or.jp/dj-classic/"))
+      update_metadata_for_program("NHK-FM", "リサイタル・ノヴァ", get_metadata_from_nhk("http://www4.nhk.or.jp/nova/5/", "http://www4.nhk.or.jp/nova/"))
     end
 
     def update_metadata_for_program(channel_name, program_name, metadata)
@@ -177,13 +177,15 @@ module Selfcaster
       RestClient.put(url, item: metadata, auth_token: AUTH_TOKEN)
     end
 
-    def get_metadata_from_nhk(url)
-      doc = Nokogiri::HTML.parse(RestClient.get(url))
-      doc.css("section.section_onair").map do |section|
-        date = Date.parse section.css(".date time")[0]["datetime"]
-        description = section.css(".summary_text p").inner_html.gsub(/<br>/, "\n")
-        {date: date, description: description}
-      end
+    def get_metadata_from_nhk(*urls)
+      urls.map{|url|
+        doc = Nokogiri::HTML.parse(RestClient.get(url))
+        doc.css("section.section_onair").map do |section|
+          date = Date.parse section.css(".date time")[0]["datetime"]
+          description = section.css(".summary_text p").inner_html.gsub(/<br>/, "\n")
+          {date: date, description: description}
+        end
+      }.flatten
     end
   end
 end
