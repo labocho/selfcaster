@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "nokogiri"
   spec.add_dependency "dotenv"
   spec.add_dependency "listen"
+  spec.add_dependency "charwidth"
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"

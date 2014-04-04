@@ -3,6 +3,7 @@ require "rest_client"
 require "nokogiri"
 require "dotenv"
 require "listen"
+require "charwidth"
 
 require "time"
 require "json"
@@ -150,14 +151,14 @@ module Selfcaster
     end
 
     def update_metadata
-      update_metadata_for_program("NHK-FM", "クラシックカフェ", get_metadata_from_nhk("http://www4.nhk.or.jp/c-cafe/5/", "http://www4.nhk.or.jp/c-cafe/"))
-      update_metadata_for_program("NHK-FM", "ベストオブクラシック", get_metadata_from_nhk("http://www4.nhk.or.jp/bescla/5/", "http://www4.nhk.or.jp/bescla/"))
-      update_metadata_for_program("NHK-FM", "古楽の楽しみ", get_metadata_from_nhk("http://www4.nhk.or.jp/kogaku/5/", "http://www4.nhk.or.jp/kogaku/"))
-      update_metadata_for_program("NHK-FM", "名演奏ライブラリー", get_metadata_from_nhk("http://www4.nhk.or.jp/meiensou/5/", "http://www4.nhk.or.jp/meiensou/"))
-      update_metadata_for_program("NHK-FM", "きらクラ!", get_metadata_from_nhk("http://www4.nhk.or.jp/kira/5/"))
-      update_metadata_for_program("NHK-FM", "ブラボー! オーケストラ", get_metadata_from_nhk("http://www4.nhk.or.jp/bravo/5/", "http://www4.nhk.or.jp/bravo/"))
-      update_metadata_for_program("NHK-FM", "DJ クラシック", get_metadata_from_nhk("http://www4.nhk.or.jp/dj-classic/5/", "http://www4.nhk.or.jp/dj-classic/"))
-      update_metadata_for_program("NHK-FM", "リサイタル・ノヴァ", get_metadata_from_nhk("http://www4.nhk.or.jp/nova/5/", "http://www4.nhk.or.jp/nova/"))
+      update_metadata_for_program("NHK-FM", "クラシックカフェ", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/933.json"))
+      update_metadata_for_program("NHK-FM", "ベストオブクラシック", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/458.json"))
+      update_metadata_for_program("NHK-FM", "古楽の楽しみ", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/1911.json"))
+      update_metadata_for_program("NHK-FM", "名演奏ライブラリー", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/1635.json"))
+      update_metadata_for_program("NHK-FM", "きらクラ!", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/2300.json"))
+      update_metadata_for_program("NHK-FM", "ブラボー! オーケストラ", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/2303.json"))
+      update_metadata_for_program("NHK-FM", "DJ クラシック", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/2251.json"))
+      update_metadata_for_program("NHK-FM", "リサイタル・ノヴァ", get_metadata_from_nhk("http://api.nhk.or.jp/r1/pg/site_id/4/130/all/2304.json"))
     end
 
     def update_metadata_for_program(channel_name, program_name, metadata)
@@ -177,15 +178,14 @@ module Selfcaster
       RestClient.put(url, item: metadata, auth_token: AUTH_TOKEN)
     end
 
-    def get_metadata_from_nhk(*urls)
-      urls.map{|url|
-        doc = Nokogiri::HTML.parse(RestClient.get(url))
-        doc.css("section.section_onair").map do |section|
-          date = Date.parse section.css(".date time")[0]["datetime"]
-          description = section.css(".summary_text p").inner_html.gsub(/<br>/, "\n")
-          {date: date, description: description}
-        end
-      }.flatten
+    def get_metadata_from_nhk(base_url)
+      url = URI.parse(base_url)
+      url.query = "from=#{(Date.today - 14).iso8601}&to=#{Date.today.iso8601}"
+      json = JSON.parse(RestClient.get(url.to_s))
+      json["list"]["r3"].map do |program|
+        description = Charwidth.normalize(program["free"]).gsub(/^ +/, "")
+        {date: Date.parse(program["date"]), description: description}
+      end
     end
   end
 end
