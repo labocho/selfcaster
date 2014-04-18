@@ -164,7 +164,7 @@ module Selfcaster
     def update_metadata_for_program(channel_name, program_name, metadata)
       puts "Checking metadata #{channel_name} #{program_name}"
       JSON.parse(RestClient.get(build_url(channel_name), params: {title: program_name, auth_token: AUTH_TOKEN})).each do |item|
-        date = Time.parse(item["published_at"]).getlocal.to_date
+        date = Time.parse(item["published_at"]).getlocal
         if (metadata_for_item = metadata.find{|m| m[:date] == date }) &&
            item["description"] != metadata_for_item[:description]
           puts "Updating metadata for #{item["title"]}..."
@@ -184,7 +184,7 @@ module Selfcaster
       json = JSON.parse(RestClient.get(url.to_s))
       json["list"]["r3"].map do |program|
         description = Charwidth.normalize(program["free"]).gsub(/^ +/, "")
-        {date: Date.parse(program["date"]), description: description}
+        {date: Time.parse(program["start_time"]), description: description}
       end
     end
   end
