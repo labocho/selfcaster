@@ -78,8 +78,12 @@ module Selfcaster
 
     def watch(paths)
       listener = Listen.to(*paths) do
-        scan(paths)
-        update_metadata if options[:update_metadata]
+        begin
+          scan(paths)
+          update_metadata if options[:update_metadata]
+        rescue
+          STDERR.puts "#{$!.class}: #{$!.message} at #{$!.backtrace.first}"
+        end
       end
       listener.start
       trap(:INT){
