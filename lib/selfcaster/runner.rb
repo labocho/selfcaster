@@ -17,7 +17,8 @@ module Selfcaster
   AUTH_TOKEN = ENV["SELFCAST_TOKEN"]
 
   CHANNELS = {
-    "NHK-FM" => 1
+    "NHK-FM" => 1,
+    "桂米朝上方落語大全集" => 3,
   }
   # 0:Sun, 1:Mon, 2:Tue, 3:Wed, 4:Thu, 5:Fri, 6:Sat
   PROGRAMS = {
@@ -50,7 +51,8 @@ module Selfcaster
       @options ||= {
         delete: false,
         update_metadata: false,
-        watch: false
+        watch: false,
+        channel: "NHK-FM"
       }
     end
 
@@ -59,6 +61,7 @@ module Selfcaster
         o.on("-d", "--[no-]delete"){|b| options[:delete] = b }
         o.on("-m", "--[no-]update-metadata"){|b| options[:update_metadata] = b }
         o.on("-w", "--watch"){|b| options[:watch] = b }
+        o.on("-c", "--channel CHANNEL_NAME"){|s| options[:channel] = s.force_encoding("utf-8") }
         o.banner = "Usage: #{File.basename($PROGRAM_NAME)} [options] file_or_directory[...]"
       end
       optparse.parse!(argv)
@@ -108,18 +111,22 @@ module Selfcaster
     end
 
     def upload(file)
+      channel = options[:channel]
       pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-FM\.mp3/
-      return unless pattern =~ File.basename(file)
+      if pattern =~ File.basename(file)
+        # year, month, day, hour, min, channel = $~.captures
+        time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
+        title = build_name(channel, time)
+      else
+        time = Time.now
+        title = File.basename(file)
+      end
       puts "Uploading... #{file}"
 
-      year, month, day, hour, min, channel = $~.captures
-      time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
-
-      channel = "NHK-FM"
 
       attributes = {
         content_filename: File.basename(file),
-        title: build_name(channel, time),
+        title: title,
         published_at: time.iso8601
       }
 
@@ -129,8 +136,8 @@ module Selfcaster
       response = RestClient.post(build_url(channel), item: attributes, auth_token: AUTH_TOKEN)
       puts "Metadata created on #{response.headers[:location]}"
 
-      presigned_post = JSON.parse(response)["presigned_post"]
-      response = RestClient.post(presigned_post["url"], presigned_post["fields"].merge(file: File.new(file)))
+      presigned_url = JSON.parse(response)["presigned_url"]
+      response = RestClient.put(presigned_url, File.new(file))
 
       puts "Uploaded on #{response.headers[:location]}"
       puts ""
