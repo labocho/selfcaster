@@ -114,7 +114,7 @@ module Selfcaster
       channel = options[:channel]
       pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-FM\.mp3/
       if pattern =~ File.basename(file)
-        # year, month, day, hour, min, channel = $~.captures
+        year, month, day, hour, min, channel = $~.captures
         time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
         title = build_name(channel, time)
       else
