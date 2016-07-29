@@ -19,6 +19,9 @@ module Selfcaster
   CHANNELS = {
     "NHK-FM" => 1,
     "桂米朝上方落語大全集" => 3,
+    "辻製菓専門学校製菓技術講座" => 4,
+    "その他" => 5,
+    "NHK1" => 6,
   }
   # 0:Sun, 1:Mon, 2:Tue, 3:Wed, 4:Thu, 5:Fri, 6:Sat
   PROGRAMS = {
@@ -61,7 +64,15 @@ module Selfcaster
         o.on("-d", "--[no-]delete"){|b| options[:delete] = b }
         o.on("-m", "--[no-]update-metadata"){|b| options[:update_metadata] = b }
         o.on("-w", "--watch"){|b| options[:watch] = b }
-        o.on("-c", "--channel CHANNEL_NAME"){|s| options[:channel] = s.force_encoding("utf-8") }
+        o.on("-c", "--channel CHANNEL_NAME"){|s|
+          s.force_encoding("utf-8")
+          options[:channel] = case s
+          when /^\d+$/
+            CHANNELS.invert[s.to_i]
+          else
+            s
+          end
+        }
         o.banner = "Usage: #{File.basename($PROGRAM_NAME)} [options] file_or_directory[...]"
       end
       optparse.parse!(argv)
@@ -112,10 +123,16 @@ module Selfcaster
 
     def upload(file)
       channel = options[:channel]
-      pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-FM\.mp3/
+      pattern = /(\d\d\d\d)(\d\d)(\d\d)(\d\d)(\d\d)\d\d-(FM|NHK1)\.mp3/
       if pattern =~ File.basename(file)
-        year, month, day, hour, min = $~.captures
+        year, month, day, hour, min, channel = $~.captures
         time = Time.new(year.to_i, month.to_i, day.to_i, hour.to_i, min.to_i)
+        channel = case channel
+        when "FM"
+          "NHK-FM"
+        when "NHK1"
+          "NHK1"
+        end
         title = build_name(channel, time)
       else
         time = Time.now
