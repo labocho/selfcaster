@@ -168,7 +168,7 @@ module Selfcaster
 
     def build_name(channel, time)
       at = time.strftime("%H%M")
-      program = PROGRAMS[channel].find{|program|
+      program = (PROGRAMS[channel] || {}).find{|program|
         program[:at] == at && program[:weekdays].include?(time.wday)
       }
       if program
