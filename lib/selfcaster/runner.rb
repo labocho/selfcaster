@@ -211,7 +211,7 @@ module Selfcaster
       url.query = "from=#{(Date.today - 14).iso8601}&to=#{Date.today.iso8601}"
       json = JSON.parse(RestClient.get(url.to_s))
       json["list"]["r3"].map do |program|
-        description = Charwidth.normalize(program["free"]).gsub(/^ +/, "")
+        description = Charwidth.normalize(program["music"]).gsub(/^ +/, "")
         {date: Time.parse(program["start_time"]), description: description}
       end
     end
