@@ -29,23 +29,19 @@ module Selfcaster
   # 0:Sun, 1:Mon, 2:Tue, 3:Wed, 4:Thu, 5:Fri, 6:Sat
   PROGRAMS = {
     "NHK-FM" => [
+      {name: "N響演奏会", at: "1600", weekdays: [6]},
       {name: "オペラ・ファンタスティカ", at: "1400", weekdays: [5]},
-      {name: "DJ クラシック", at: "2110", weekdays: [5]},
-      {name: "現代の音楽", at: "0600", weekdays: [6]},
-      {name: "クラシックの迷宮", at: "2100", weekdays: [6]},
-      {name: "きらクラ!", at: "1400", weekdays: [0]},
+      {name: "現代の音楽", at: "0810", weekdays: [6]},
+      {name: "音楽の泉", at: "0500", weekdays: [6]},
+      {name: "クラシックの迷宮", at: "1925", weekdays: [6]},
+      {name: "×クラシック", at: "1400", weekdays: [0]},
       {name: "ビバ! 合唱", at: "0720", weekdays: [0]},
-      {name: "吹奏楽のひびき", at: "0810", weekdays: [0]},
+      {name: "吹奏楽のひびき", at: "1600", weekdays: [0]},
       {name: "名演奏ライブラリー", at: "0900", weekdays: [0]},
-      {name: "ブラボー! オーケストラ", at: "1920", weekdays: [0]},
-      {name: "リサイタル・ノヴァ", at: "2020", weekdays: [0]},
-      {name: "ベストオブクラシック", at: "1930", weekdays: [1, 2, 3, 4, 5]},
+      {name: "ブラボー! オーケストラ", at: "1925", weekdays: [0]},
+      {name: "リサイタル・パッシオ", at: "2025", weekdays: [0]},
+      {name: "ベストオブクラシック", at: "1935", weekdays: [1, 2, 3, 4, 5]},
       {name: "古楽の楽しみ", at: "0600", weekdays: [1, 2, 3, 4, 5]},
-      {name: "クラシックカフェ", at: "1400", weekdays: [1, 2, 3, 4]},
-      {name: "名曲の小箱", at: "0550", weekdays: [0, 1, 2, 3, 4, 5, 6]},
-      {name: "名曲の小箱", at: "2255", weekdays: [6]},
-      {name: "名曲スケッチ", at: "0050", weekdays: [2, 3, 4, 5, 6]},
-      {name: "ガットのしらべ", at: "2015", weekdays: [6]}
     ]
   }
   class Runner
