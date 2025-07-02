@@ -22,6 +22,9 @@ module Selfcaster
     "辻製菓専門学校製菓技術講座" => 4,
     "その他" => 5,
     "NHK1" => 6,
+    "NGMS 練習録音" => 7,
+    "多聴多読マガジン" => 8,
+    "スロトレ" => 9,
   }
   # 0:Sun, 1:Mon, 2:Tue, 3:Wed, 4:Thu, 5:Fri, 6:Sat
   PROGRAMS = {
@@ -116,7 +119,7 @@ module Selfcaster
         else
           file_or_directory
         end
-      }.flatten
+      }.flatten.sort
 
       files.each{|file| upload(file) }
     end
