@@ -42,6 +42,7 @@ module Selfcaster
       {name: "リサイタル・パッシオ", at: "2025", weekdays: [0]},
       {name: "ベストオブクラシック", at: "1935", weekdays: [1, 2, 3, 4, 5]},
       {name: "古楽の楽しみ", at: "0600", weekdays: [1, 2, 3, 4, 5]},
+      {name: "サカナクション・山口一郎 〜Night Fishing Radio〜", at: "1800", weekdays: [0]},
     ]
   }
   class Runner
